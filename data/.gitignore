@@ -1,0 +1,7 @@
+**/data/
+**/data
+**/imdb
+**/downloads
+**/cached
+*/*
+*.lock
