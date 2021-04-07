@@ -5,3 +5,5 @@
 **/cached
 */*
 *.lock
+*.json
+*.*
