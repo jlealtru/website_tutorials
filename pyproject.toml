@@ -1,0 +1,49 @@
+[project]
+name = "website-tutorials"
+version = "0.1.0"
+description = "Notebook tutorials on Deep Learning, NLP, and Graph Learning."
+requires-python = "==3.11.*"
+dependencies = [
+    # PyTorch + HuggingFace stack
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "transformers==4.46.3",
+    "datasets==3.1.0",
+    "tokenizers==0.20.3",
+    "accelerate==1.1.1",
+    "sentencepiece==0.2.0",
+    "tensorboard==2.18.0",
+    "setuptools==75.6.0",
+    "wandb==0.18.7",
+
+    # Classical NLP / topic modeling
+    "gensim==4.3.3",
+    "spacy==3.8.2",
+    "scikit-learn==1.5.2",
+    "scipy==1.13.1",
+    "pandas==2.2.3",
+    "numpy==1.26.4",
+    "smart-open==7.0.5",
+
+    # Graph / node2vec
+    "pecanpy==2.0.9",
+    "networkx==3.4.2",
+    "igraph==0.11.8",
+    "hdbscan==0.8.40",
+    "plotly==5.24.1",
+    "matplotlib==3.9.3",
+    "seaborn==0.13.2",
+
+    # App
+    "streamlit==1.40.2",
+    "ollama==0.4.2",
+    "Pillow==11.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "jupyterlab==4.3.1",
+    "ipykernel==6.29.5",
+    "nbconvert==7.16.4",
+    "tqdm==4.67.1",
+]
