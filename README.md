@@ -12,8 +12,8 @@ Prereqs: macOS, Linux, or Windows; [uv](https://docs.astral.sh/uv/getting-starte
 # 1. Create the venv and install pinned, hash-verified deps
 uv sync --frozen
 
-# 2. Install the spaCy English model (needed by the ETM notebooks)
-uv run --with pip python -m spacy download en_core_web_sm
+# 2. (ETM notebooks only) install the pinned spaCy models — en_core_web_lg + md
+uv sync --frozen --group etm
 
 # 3. Launch JupyterLab
 uv run jupyter lab
@@ -61,21 +61,21 @@ uv run python scripts/resume_roberta_imdb.py
 
 ## Data prerequisites
 
-Some notebooks rely on datasets that are **not bundled with this repository** (size, licensing, etc.). Two helper scripts fetch them into `data/<name>/`:
+Some notebooks rely on datasets that are **not bundled with this repository** (size, licensing, etc.). Helper scripts fetch them into `data/<name>/`:
 
 | Notebook(s) | Dataset | How to get it |
 |---|---|---|
 | `processing_capital_bikeshare_data.ipynb`<br>`node2vec with capitol bikeshare data.ipynb` | Capital Bikeshare trips 2019 + 2020 (24 monthly zips) | `bash scripts/fetch_bikeshare.sh` — public S3 bucket, no auth. Downloads to `data/capital_bikes/` (~140 MB zipped). |
 | `Multi_label_classification_longformer_tutorial.ipynb`<br>`Multi_label_classification_roberta.ipynb` | Jigsaw Toxic Comment Classification | `bash scripts/fetch_jigsaw.sh` — **needs** `~/.kaggle/kaggle.json` and acceptance of the [competition rules](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/rules). Downloads to `data/jigsaw/`. |
-| `etm_preprocessed_data.ipynb`<br>`etm_spacy_pipeline.ipynb` | Pitchfork album reviews (`pitchfork.csv`) | The Kaggle Pitchfork reviews dataset → place under `data/pitchfork/` |
+| `etm_preprocessed_data.ipynb`<br>`etm_spacy_pipeline.ipynb` | Pitchfork album reviews (`pitchfork.csv` + `stop.txt`) | `uv run python scripts/fetch_pitchfork.py` — pulls `reviews.csv` from the [HF `mattismegevand/pitchfork`](https://huggingface.co/datasets/mattismegevand/pitchfork) dataset, remaps it to the notebooks' schema, and generates the stopword file into `data/pitchfork/`. Also needs the spaCy models: `uv sync --frozen --group etm`. |
 
 Run the bikeshare processing notebook **before** the node2vec notebook — the latter consumes `data/capital_bikes/graph_data_full.csv` and `bike_locations.csv` produced by the former. (Station locations are pulled live from the Capital Bikeshare open-data layer, whose schema now exposes `NAME`/`LATITUDE`/`LONGITUDE`.)
 
 The IMDB-based notebooks (`RoBERTA with IMDB.ipynb`, `Longformer with IMDB.ipynb`, `BigBird text classification.ipynb`) auto-download IMDB through HuggingFace `datasets` — no manual setup needed.
 
-## Fast smoke test of the transformer notebooks
+## Fast smoke test of the training notebooks
 
-A full fine-tune of the transformer notebooks takes hours-to-days on Apple Silicon (dense attention on MPS runs ~10× slower than the RTX 3090 these were built for). To verify that a notebook still **executes end-to-end** without paying for a full run, the four fine-tuning notebooks honour a `SMOKE_TEST` environment variable:
+A full run of the training notebooks takes hours-to-days on Apple Silicon (dense attention on MPS runs ~10× slower than the RTX 3090 these were built for; the ETM notebooks also tokenize ~26k reviews with spaCy). To verify that a notebook still **executes end-to-end** without paying for a full run, the training notebooks honour a `SMOKE_TEST` environment variable:
 
 ```bash
 cd notebooks
@@ -85,7 +85,7 @@ SMOKE_TEST=1 uv run jupyter nbconvert --to notebook --execute \
   "Longformer with IMDB.ipynb"
 ```
 
-With `SMOKE_TEST=1` the notebook sub-samples the data, shortens `max_length`, drops to 1 epoch, and disables gradient accumulation — a few minutes total. Unset (the default), every notebook runs at its original full-scale configuration. Notebooks with the toggle: `Longformer with IMDB`, `Multi_label_classification_roberta`, `Multi_label_classification_longformer_tutorial` (and `RoBERTA with IMDB`).
+With `SMOKE_TEST=1` the notebook sub-samples the data and cuts to a short single-pass run — a few minutes total. Unset (the default), every notebook runs at its original full-scale configuration. Notebooks with the toggle: `RoBERTA with IMDB`, `Longformer with IMDB`, `BigBird text classification`, `Multi_label_classification_roberta`, `Multi_label_classification_longformer_tutorial`, and the two ETM notebooks `etm_preprocessed_data` / `etm_spacy_pipeline` (there the toggle subsamples documents, relaxes the vocabulary pruning, and shortens training instead of `max_length`). The ETM notebooks also need `WANDB_MODE=disabled` in the environment unless you have run `wandb login` (it is set inside the notebook by default).
 
 ## Streamlit app (`app.py`)
 

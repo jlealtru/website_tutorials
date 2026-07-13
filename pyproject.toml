@@ -48,3 +48,11 @@ dev = [
     "tqdm==4.67.1",
     "kaggle==1.6.17",
 ]
+etm = [
+    "en-core-web-lg",
+    "en-core-web-md",
+]
+
+[tool.uv.sources]
+en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }
+en-core-web-md = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl" }
