@@ -61,12 +61,12 @@ uv run python scripts/resume_roberta_imdb.py
 
 ## Data prerequisites
 
-Some notebooks rely on datasets that are **not bundled with this repository** (size, licensing, etc.). Place each under `data/<name>/`:
+Some notebooks rely on datasets that are **not bundled with this repository** (size, licensing, etc.). Two helper scripts fetch them into `data/<name>/`:
 
 | Notebook(s) | Dataset | How to get it |
 |---|---|---|
-| `processing_capital_bikeshare_data.ipynb`<br>`node2vec with capitol bikeshare data.ipynb` | Capital Bikeshare trips 2019 + 2020 (24 monthly zips) | Download `YYYYMM-capitalbikeshare-tripdata.zip` for 2019-01…2020-12 from the [public S3 bucket](https://s3.amazonaws.com/capitalbikeshare-data/index.html) into `data/capital_bikes/` (no auth; ~140 MB zipped). |
-| `Multi_label_classification_longformer_tutorial.ipynb`<br>`Multi_label_classification_roberta.ipynb` | Jigsaw Toxic Comment Classification | `uv run kaggle competitions download -c jigsaw-toxic-comment-classification-challenge -p data/jigsaw` then unzip — needs `~/.kaggle/kaggle.json` and acceptance of the [competition rules](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/rules). |
+| `processing_capital_bikeshare_data.ipynb`<br>`node2vec with capitol bikeshare data.ipynb` | Capital Bikeshare trips 2019 + 2020 (24 monthly zips) | `bash scripts/fetch_bikeshare.sh` — public S3 bucket, no auth. Downloads to `data/capital_bikes/` (~140 MB zipped). |
+| `Multi_label_classification_longformer_tutorial.ipynb`<br>`Multi_label_classification_roberta.ipynb` | Jigsaw Toxic Comment Classification | `bash scripts/fetch_jigsaw.sh` — **needs** `~/.kaggle/kaggle.json` and acceptance of the [competition rules](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/rules). Downloads to `data/jigsaw/`. |
 | `etm_preprocessed_data.ipynb`<br>`etm_spacy_pipeline.ipynb` | Pitchfork album reviews (`pitchfork.csv`) | The Kaggle Pitchfork reviews dataset → place under `data/pitchfork/` |
 
 Run the bikeshare processing notebook **before** the node2vec notebook — the latter consumes `data/capital_bikes/graph_data_full.csv` and `bike_locations.csv` produced by the former. (Station locations are pulled live from the Capital Bikeshare open-data layer, whose schema now exposes `NAME`/`LATITUDE`/`LONGITUDE`.)
@@ -122,6 +122,6 @@ Requires a local [Ollama](https://ollama.com/) daemon with a Gemma-3 vision mode
 - **node2vec**: replaced unmaintained `stellargraph` with `pecanpy`, which has macOS arm64 wheels and a 1:1 mapping of biased-random-walk parameters. gensim `Word2Vec(iter=...)` → `epochs=...` (the 4.x rename).
 - **spaCy**: `spacy.prefer_gpu()` wrapped in try/except so it no-ops on hardware without CUDA.
 - **Kernelspec**: every notebook's dead `conda-env-torch-py` kernel replaced with the portable `python3` kernel so `jupyter`/`nbconvert` run against the `uv` venv.
-- **Capital Bikeshare**: handled the mid-2020 trip-CSV schema change and the station-locations layer's new `NAME`/`LATITUDE`/`LONGITUDE` columns (was `ADDRESS`/`ID`).
-- **Jigsaw notebooks**: fixed pre-existing `SyntaxError`s in the `from_pretrained(...)` calls (missing commas), repointed a dead `/media/...` checkpoint to `roberta-base`, and set DataLoader `num_workers=0` (macOS `spawn` can't pickle notebook-defined `Dataset` classes).
+- **Capital Bikeshare**: added `scripts/fetch_bikeshare.sh` (public S3); handled the mid-2020 trip-CSV schema change and the station-locations layer's new `NAME`/`LATITUDE`/`LONGITUDE` columns (was `ADDRESS`/`ID`).
+- **Jigsaw notebooks**: fixed pre-existing `SyntaxError`s in the `from_pretrained(...)` calls (missing commas), repointed a dead `/media/...` checkpoint to `roberta-base`, and set DataLoader `num_workers=0` (macOS `spawn` can't pickle notebook-defined `Dataset` classes). Added `scripts/fetch_jigsaw.sh`.
 - **Smoke toggle**: `SMOKE_TEST` env var on the fine-tuning notebooks (see above).
