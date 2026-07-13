@@ -46,4 +46,5 @@ dev = [
     "ipykernel==6.29.5",
     "nbconvert==7.16.4",
     "tqdm==4.67.1",
+    "kaggle==1.6.17",
 ]

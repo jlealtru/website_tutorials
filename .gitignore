@@ -7,8 +7,13 @@ wandb/
 *.bin
 .DS_Store
 data/.hf_cache/
+data/capital_bikes/
+data/jigsaw/
 results/_nbruns/
 results/checkpoint-*/
 results/runs/
 results/logs/
+results/longformer_imdb/
+results/roberta_base_multilabel_jigsaw/
+results/longformer_base_multilabel_jigsaw/
 

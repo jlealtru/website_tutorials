@@ -61,15 +61,31 @@ uv run python scripts/resume_roberta_imdb.py
 
 ## Data prerequisites
 
-Three of the notebooks rely on datasets that are **not bundled with this repository** (size, licensing, etc.). Place each dataset under `data/<name>/` before running its notebook:
+Some notebooks rely on datasets that are **not bundled with this repository** (size, licensing, etc.). Place each under `data/<name>/`:
 
-| Notebook(s) | Dataset | Where to get it |
+| Notebook(s) | Dataset | How to get it |
 |---|---|---|
-| `processing_capital_bikeshare_data.ipynb`<br>`node2vec with capitol bikeshare data.ipynb` | Capital Bikeshare trips (yearly zip files) | <https://s3.amazonaws.com/capitalbikeshare-data/index.html> → drop zips into `data/capital_bikes/` |
-| `Multi_label_classification_longformer_tutorial.ipynb`<br>`Multi_label_classification_roberta.ipynb` | Jigsaw Toxic Comment Classification (`train.csv`) | Kaggle competition: `jigsaw-toxic-comment-classification-challenge` → place under `data/jigsaw/` |
+| `processing_capital_bikeshare_data.ipynb`<br>`node2vec with capitol bikeshare data.ipynb` | Capital Bikeshare trips 2019 + 2020 (24 monthly zips) | Download `YYYYMM-capitalbikeshare-tripdata.zip` for 2019-01…2020-12 from the [public S3 bucket](https://s3.amazonaws.com/capitalbikeshare-data/index.html) into `data/capital_bikes/` (no auth; ~140 MB zipped). |
+| `Multi_label_classification_longformer_tutorial.ipynb`<br>`Multi_label_classification_roberta.ipynb` | Jigsaw Toxic Comment Classification | `uv run kaggle competitions download -c jigsaw-toxic-comment-classification-challenge -p data/jigsaw` then unzip — needs `~/.kaggle/kaggle.json` and acceptance of the [competition rules](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/rules). |
 | `etm_preprocessed_data.ipynb`<br>`etm_spacy_pipeline.ipynb` | Pitchfork album reviews (`pitchfork.csv`) | The Kaggle Pitchfork reviews dataset → place under `data/pitchfork/` |
 
+Run the bikeshare processing notebook **before** the node2vec notebook — the latter consumes `data/capital_bikes/graph_data_full.csv` and `bike_locations.csv` produced by the former. (Station locations are pulled live from the Capital Bikeshare open-data layer, whose schema now exposes `NAME`/`LATITUDE`/`LONGITUDE`.)
+
 The IMDB-based notebooks (`RoBERTA with IMDB.ipynb`, `Longformer with IMDB.ipynb`, `BigBird text classification.ipynb`) auto-download IMDB through HuggingFace `datasets` — no manual setup needed.
+
+## Fast smoke test of the transformer notebooks
+
+A full fine-tune of the transformer notebooks takes hours-to-days on Apple Silicon (dense attention on MPS runs ~10× slower than the RTX 3090 these were built for). To verify that a notebook still **executes end-to-end** without paying for a full run, the four fine-tuning notebooks honour a `SMOKE_TEST` environment variable:
+
+```bash
+cd notebooks
+SMOKE_TEST=1 uv run jupyter nbconvert --to notebook --execute \
+  --ExecutePreprocessor.kernel_name=python3 \
+  --output-dir ../results/_nbruns --output <name>_smoke \
+  "Longformer with IMDB.ipynb"
+```
+
+With `SMOKE_TEST=1` the notebook sub-samples the data, shortens `max_length`, drops to 1 epoch, and disables gradient accumulation — a few minutes total. Unset (the default), every notebook runs at its original full-scale configuration. Notebooks with the toggle: `Longformer with IMDB`, `Multi_label_classification_roberta`, `Multi_label_classification_longformer_tutorial` (and `RoBERTA with IMDB`).
 
 ## Streamlit app (`app.py`)
 
@@ -103,5 +119,9 @@ Requires a local [Ollama](https://ollama.com/) daemon with a Gemma-3 vision mode
 - **gensim 4.x**: `Word2Vec(size=...)` → `vector_size=...`; `wv.vocab` → `wv.key_to_index`; `wv.index2word` → `wv.index_to_key`.
 - **pandas**: `display.max_colwidth=-1` → `None`.
 - **HuggingFace Trainer**: `evaluation_strategy=` → `eval_strategy=`; `gradient_checkpointing=False` removed from `from_pretrained()` (use `model.gradient_checkpointing_disable()` instead); `cache_dir='/media/...'` Linux paths removed; `report_to='none'` added (wandb opt-in).
-- **node2vec**: replaced unmaintained `stellargraph` with `pecanpy`, which has macOS arm64 wheels and a 1:1 mapping of biased-random-walk parameters.
+- **node2vec**: replaced unmaintained `stellargraph` with `pecanpy`, which has macOS arm64 wheels and a 1:1 mapping of biased-random-walk parameters. gensim `Word2Vec(iter=...)` → `epochs=...` (the 4.x rename).
 - **spaCy**: `spacy.prefer_gpu()` wrapped in try/except so it no-ops on hardware without CUDA.
+- **Kernelspec**: every notebook's dead `conda-env-torch-py` kernel replaced with the portable `python3` kernel so `jupyter`/`nbconvert` run against the `uv` venv.
+- **Capital Bikeshare**: handled the mid-2020 trip-CSV schema change and the station-locations layer's new `NAME`/`LATITUDE`/`LONGITUDE` columns (was `ADDRESS`/`ID`).
+- **Jigsaw notebooks**: fixed pre-existing `SyntaxError`s in the `from_pretrained(...)` calls (missing commas), repointed a dead `/media/...` checkpoint to `roberta-base`, and set DataLoader `num_workers=0` (macOS `spawn` can't pickle notebook-defined `Dataset` classes).
+- **Smoke toggle**: `SMOKE_TEST` env var on the fine-tuning notebooks (see above).
