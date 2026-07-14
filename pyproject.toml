@@ -52,6 +52,11 @@ etm = [
     "en-core-web-lg",
     "en-core-web-md",
 ]
+# GPU tokenization for the ETM notebooks (spacy.prefer_gpu() picks it up).
+# Linux/NVIDIA only — harmless to skip on macOS (MPS has no cupy).
+spacy-cuda = [
+    "cupy-cuda12x==13.3.0 ; sys_platform == 'linux'",
+]
 
 [tool.uv.sources]
 en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }
