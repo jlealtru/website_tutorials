@@ -57,6 +57,14 @@ etm = [
 spacy-cuda = [
     "cupy-cuda12x==13.3.0 ; sys_platform == 'linux'",
 ]
+# BERTopic on the Pitchfork reviews (sentence embeddings + UMAP + HDBSCAN).
+# Pure-python deps, installs the same on Linux/CUDA and macOS/MPS.
+bertopic = [
+    "bertopic==0.16.4",
+    "sentence-transformers==3.3.1",
+    "umap-learn==0.5.7",
+    "pynndescent==0.5.13",  # uv would pick 0.6.x, newer than the rest of this stack
+]
 
 [tool.uv.sources]
 en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }
