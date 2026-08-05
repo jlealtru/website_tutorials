@@ -1,0 +1,79 @@
+[project]
+name = "website-tutorials"
+version = "0.1.0"
+description = "Notebook tutorials on Deep Learning, NLP, and Graph Learning."
+requires-python = "==3.11.*"
+dependencies = [
+    # PyTorch + HuggingFace stack
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "transformers==4.57.6",   # 4.57.x adds the Gemma3 encoder behind EmbeddingGemma; last 4.x line, keeps the API the other notebooks were verified against
+    "datasets==3.1.0",
+    "tokenizers==0.22.2",     # bumped to satisfy transformers 4.57
+    "accelerate==1.1.1",
+    "sentencepiece==0.2.0",
+    "tensorboard==2.18.0",
+    "setuptools==75.6.0",
+    "wandb==0.18.7",
+
+    # Classical NLP / topic modeling
+    "gensim==4.3.3",
+    "spacy==3.8.2",
+    "scikit-learn==1.5.2",
+    "scipy==1.13.1",
+    "pandas==2.2.3",
+    "numpy==1.26.4",
+    "smart-open==7.0.5",
+
+    # Graph / node2vec
+    "pecanpy==2.0.9",
+    "networkx==3.4.2",
+    "igraph==0.11.8",
+    "hdbscan==0.8.40",
+    "plotly==5.24.1",
+    "matplotlib==3.9.3",
+    "seaborn==0.13.2",
+
+    # App
+    "streamlit==1.40.2",
+    "ollama==0.4.2",
+    "Pillow==11.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "jupyterlab==4.3.1",
+    "ipykernel==6.29.5",
+    "nbconvert==7.16.4",
+    "tqdm==4.67.1",
+    "kaggle==1.6.17",
+]
+etm = [
+    "en-core-web-lg",
+    "en-core-web-md",
+]
+# GPU tokenization for the ETM notebooks (spacy.prefer_gpu() picks it up).
+# Linux/NVIDIA only — harmless to skip on macOS (MPS has no cupy).
+spacy-cuda = [
+    "cupy-cuda12x==13.3.0 ; sys_platform == 'linux'",
+]
+# BERTopic on the Pitchfork reviews (sentence embeddings + UMAP + HDBSCAN).
+# Pure-python deps, installs the same on Linux/CUDA and macOS/MPS.
+bertopic = [
+    "bertopic==0.16.4",
+    "sentence-transformers==5.6.0",   # 5.x loads EmbeddingGemma's Gemma3 encoder
+    "umap-learn==0.5.7",
+    "pynndescent==0.5.13",  # uv would pick 0.6.x, newer than the rest of this stack
+    "python-dotenv==1.2.2",   # load HF_TOKEN from .env for the gated EmbeddingGemma download
+]
+
+[tool.uv]
+# the notebooks live in these groups (jupyter/ipykernel in dev, spacy models in etm,
+# sentence-transformers/bertopic/umap in bertopic). keep them in the synced env by
+# default so `uv run jupyter lab` and plain `uv sync` don't prune them -- otherwise
+# the kernel loses sentence_transformers and the notebooks hit ModuleNotFoundError.
+default-groups = ["dev", "etm", "bertopic"]
+
+[tool.uv.sources]
+en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }
+en-core-web-md = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl" }
